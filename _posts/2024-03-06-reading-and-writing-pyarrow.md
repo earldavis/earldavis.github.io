@@ -54,7 +54,7 @@ for _root, _dirs, files in os.walk(os.path.join(root, 'data', 'raw')):
             csv.write_csv(tbl, csv_path)
 ```
 
-I could have probably just saved the csv-formatted tables to parquet, but the applicaiton that I am currently working with only reads csv.
+I could have probably just saved the csv-formatted tables to parquet, but the application that I am currently working with only reads csv.
 I prefer working with parquet files, so I went ahead and saved them to parquet for possible future use.
 
 ```python

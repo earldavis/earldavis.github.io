@@ -1,12 +1,10 @@
 ---
 layout: post
-title: Reading Really Big Files Using Pandas and PyArrow
+title: How to Read Really Big Files that May Not Fit In Memory
 date: 2024-02-22 14:06
 categories: [data_science,]
 description: A post about reading reading very large CFPB mortgage data files.
 ---
-
-# How to Read Really Big Files that May Not Fit In Memory
 
 First you need to convert the zipfile, in this case a 1.6GB zipped archive, into something that is unzipped.
 This chunk of code converts into an almost 20GB csv file. This file will likely crash your computer if you 
@@ -24,7 +22,7 @@ with zipfile.ZipFile(zip_path, 'r') as zip_file:
     zip_file.extractall('./hmda')
 ```
 
-Use Pandas and PyArrow instead.
+## Use Pandas and PyArrow instead.
 
 ```python
 import pandas as pd
@@ -91,4 +89,4 @@ for n in range(partition_count):
 sum(n_list)
 ```
 
-You will get `26_605_695` of data.
+You will get 26_605_695 rows of data.
