@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Using BigQuery for Data Science
-date: 2024-02-14 09:55
+date: 2023-07-21 11:05
 categories: [data_science,]
 description: A post about that time I used BigQuery to create a model to predict incidents in ServiceNow.
 ---

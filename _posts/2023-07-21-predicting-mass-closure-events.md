@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Using Python to Extract Predictions from a VertexAI Model Endpoint
-date: 2024-02-14 14:40
+date: 2023-07-21 10:34
 categories: [data_science,]
 description: An example of how to use python to transform data and query a VertexAI endpoint based on that transformation, because data engineering is not as simple as the tutorials make it out to be.
 ---
