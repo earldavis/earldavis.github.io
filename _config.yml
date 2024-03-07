@@ -4,7 +4,7 @@ title: "Earl Davis"
 description: >- # this means to ignore newlines until "baseurl:"
   Economics, Data Science, Data Engineering, and Machine Learning
 
-baseurl: /earlfolio #name of GitHub repository
+baseurl: "" #name of GitHub repository
 url: "" #custom url to be used instead of GitHub repository
 email: #
 
