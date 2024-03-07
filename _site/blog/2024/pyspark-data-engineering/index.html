@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta content="width=device-width, initial-scale=1" name="viewport">
+        <link rel="stylesheet" href="/earlfolio/assets/css/main.css">
+
+        <h1 class="post-headline">Earl Davis</h1>
+        <h3 class="post-description">Economics, Data Science, Data Engineering, and Machine Learning</h3>
+
+        <div class="links scroll">
+        <a href="/earlfolio/">Home</a>
+        <a href="/earlfolio/about/">About</a>
+        <a href="/earlfolio/resume/">Resume</a>
+        <a href="/earlfolio/blog/">Blog</a>
+        <a href="/earlfolio/archive/">Archive</a>
+        <!-- <a href="/earlfolio/projects/">Projects</a> -->
+</div>
+
+
+        <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Using Github Copilot for Data Engineering | Earl Davis</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Using Github Copilot for Data Engineering" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A post about that time I used copilot to do some data engineering." />
+<meta property="og:description" content="A post about that time I used copilot to do some data engineering." />
+<link rel="canonical" href="http://localhost:4000/earlfolio/blog/2024/pyspark-data-engineering/" />
+<meta property="og:url" content="http://localhost:4000/earlfolio/blog/2024/pyspark-data-engineering/" />
+<meta property="og:site_name" content="Earl Davis" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-02-15T14:09:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Using Github Copilot for Data Engineering" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2024-02-15T14:09:00-06:00","datePublished":"2024-02-15T14:09:00-06:00","description":"A post about that time I used copilot to do some data engineering.","headline":"Using Github Copilot for Data Engineering","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/earlfolio/blog/2024/pyspark-data-engineering/"},"url":"http://localhost:4000/earlfolio/blog/2024/pyspark-data-engineering/"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+        <!-- Generated using https://favicon.io/ -->
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png?">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png?">
+<link rel="manifest" href=site.webmanifest">
+
+
+        <!-- MathJax -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: { inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+     processEscapes: true
+    }
+  });
+</script>
+
+
+        <!-- Load fontawesome here for faster loadtimes: https://stackoverflow.com/a/35880730/9523246 -->
+        <script type="text/javascript"> (function() { var css = document.createElement('link'); css.href = 'https://use.fontawesome.com/releases/v5.11.0/css/all.css'; css.rel = 'stylesheet'; css.type = 'text/css'; document.getElementsByTagName('head')[0].appendChild(css); })(); </script>
+    </head>
+
+    <body>
+        <main>
+            <article>
+                <h1 class="post-headline">Using Github Copilot for Data Engineering</h1>
+<p class="meta"><small>February 15, 2024</small></p>
+
+<h1 id="dssju750">DSSJU750</h1>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="kn">from</span> <span class="n">delta</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="n">pyspark.sql</span> <span class="kn">import</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+</code></pre></div></div>
+<h1 id="start-spark-session">Start Spark session</h1>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">app_name</span> <span class="o">=</span> <span class="sh">"</span><span class="s">DSSJU750</span><span class="sh">"</span>
+<span class="n">builder</span> <span class="o">=</span> <span class="p">(</span><span class="n">SparkSession</span><span class="p">.</span><span class="n">builder</span><span class="p">.</span><span class="nf">appName</span><span class="p">(</span><span class="n">app_name</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">config</span><span class="p">(</span><span class="sh">'</span><span class="s">spark.jars.packages</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">org.apache.spark:spark-connect_2.12:3.4.2</span><span class="sh">'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">config</span><span class="p">(</span><span class="sh">'</span><span class="s">spark.jars.packages</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">io.delta:delta-core_2.12:2.4.0</span><span class="sh">'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">config</span><span class="p">(</span><span class="sh">"</span><span class="s">spark.sql.extensions</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">io.delta.sql.DeltaSparkSessionExtension</span><span class="sh">"</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">config</span><span class="p">(</span><span class="sh">"</span><span class="s">spark.sql.catalog.spark_catalog</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">org.apache.spark.sql.delta.catalog.DeltaCatalog</span><span class="sh">"</span><span class="p">)</span>
+    <span class="p">)</span>
+
+<span class="n">spark</span> <span class="o">=</span> <span class="nf">configure_spark_with_delta_pip</span><span class="p">(</span><span class="n">builder</span><span class="p">).</span><span class="nf">getOrCreate</span><span class="p">()</span>
+<span class="n">root</span> <span class="o">=</span> <span class="sh">'</span><span class="s">/path/to/the/project/work/</span><span class="sh">'</span>
+<span class="n">write_path</span> <span class="o">=</span> <span class="n">root</span> <span class="o">+</span> <span class="sh">"</span><span class="s">data/DSSJU750/</span><span class="sh">"</span>
+
+<span class="c1"># current_date = F.current_date()
+</span><span class="n">current_date</span> <span class="o">=</span> <span class="sh">'</span><span class="s">2023-11-21</span><span class="sh">'</span>
+<span class="n">type_indicator</span> <span class="o">=</span> <span class="sh">"</span><span class="s">BUD</span><span class="sh">"</span>
+<span class="n">file_type</span> <span class="o">=</span> <span class="sh">"</span><span class="s">parquet</span><span class="sh">"</span>
+</code></pre></div></div>
+
+<h3 id="jobpx750createbudgetfile">JobPx750CreateBudgetFile</h3>
+<h4 id="824">824</h4>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Load and perform a transformation on the DataFrame
+# df = spark.read.format("delta").load(root + "data/delta/DSS_DAY.delta")
+</span><span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="p">.</span><span class="n">read</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="n">file_type</span><span class="p">).</span><span class="nf">load</span><span class="p">(</span><span class="n">root</span> <span class="o">+</span> <span class="sa">f</span><span class="sh">"</span><span class="s">data/</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s">/DSS_DAY.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># Will return a list of YR_PER values if there is more than one
+</span><span class="n">yr_per</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="sh">'</span><span class="s">YR_PER</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span>
+    <span class="n">df</span>
+    <span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">,</span>
+                <span class="n">F</span><span class="p">.</span><span class="nf">when</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">substring</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">),</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="sh">"</span><span class="s">13</span><span class="sh">"</span><span class="p">,</span>
+                       <span class="n">F</span><span class="p">.</span><span class="nf">concat</span><span class="p">((</span><span class="n">F</span><span class="p">.</span><span class="nf">substring</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">int</span><span class="sh">"</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">string</span><span class="sh">"</span><span class="p">),</span>
+                                <span class="n">F</span><span class="p">.</span><span class="nf">lit</span><span class="p">(</span><span class="sh">"</span><span class="s">01</span><span class="sh">"</span><span class="p">))).</span><span class="nf">otherwise</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">)))</span>
+    <span class="p">.</span><span class="nf">filter</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">EOD_DT</span><span class="sh">"</span><span class="p">)</span> <span class="o">==</span> <span class="n">current_date</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">collect</span><span class="p">()</span>
+<span class="p">)]</span>
+
+<span class="n">df_day</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span>
+    <span class="p">.</span><span class="nf">select</span><span class="p">(</span><span class="sh">'</span><span class="s">FIN_EOW_DT</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">YR_PER</span><span class="sh">'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">distinct</span><span class="p">()</span>
+    <span class="p">.</span><span class="nf">filter</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">).</span><span class="nf">isin</span><span class="p">(</span><span class="n">yr_per</span><span class="p">))</span>
+<span class="p">)</span>
+<span class="n">df_day</span><span class="p">.</span><span class="nf">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ==============================================================================
+# Superfluous to use the DSS_FIN_WK.delta table, but it's here for reference
+# ==============================================================================
+# fin_eow_dt_list = [row['FIN_EOW_DT'] for row in df_day.select("FIN_EOW_DT").collect()]
+# fin_wk = (
+#     spark.read.format("delta").load(root + "data/delta/DSS_FIN_WK.delta")
+#     .filter(F.col("FIN_EOW_DT").isin(fin_eow_dt_list))
+#     .sort("FIN_EOW_DT", ascending=True)
+# )
+# fin_wk.show()
+</span>
+<span class="c1"># The filter condition appears to be an external variable of either "BUD" or "FOR"
+# i.e. F.col("BUD_IND") == "BUD" or F.col("BUD_IND") == "FOR"
+</span><span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="p">.</span><span class="n">read</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="n">file_type</span><span class="p">).</span><span class="nf">load</span><span class="p">(</span><span class="n">root</span> <span class="o">+</span> <span class="sa">f</span><span class="sh">"</span><span class="s">data/</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s">/DSS_CATG_BUD.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="n">catg_bud</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span>
+    <span class="p">.</span><span class="nf">filter</span><span class="p">((</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_IND</span><span class="sh">"</span><span class="p">)</span> <span class="o">==</span> <span class="n">type_indicator</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">FOR_VER</span><span class="sh">"</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span>
+<span class="p">)</span>
+<span class="n">catg_bud</span><span class="p">.</span><span class="nf">count</span><span class="p">()</span>
+</code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ==============================================================================
+# The join to fin_wk is superfluous, but it's here for reference.
+# ==============================================================================
+# The equivalent of the join is to use the df_day DataFrame instead of fin_wk.
+# df = catg_bud.join(fin_wk, "FIN_EOW_DT", "inner")
+</span>
+<span class="c1"># Perform a transformation on the DataFrame
+</span><span class="n">df</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">catg_bud</span>
+    <span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">df_day</span><span class="p">,</span> <span class="sh">"</span><span class="s">FIN_EOW_DT</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">inner</span><span class="sh">"</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">select</span><span class="p">(</span><span class="sh">'</span><span class="s">DEPT_STORE_NBR</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">FIN_EOW_DT</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">BUD_SLS_AMT</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">YR_PER</span><span class="sh">'</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="c1"># print(df.count())
+</span></code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">DEPT_STORE_NBR</span><span class="sh">"</span><span class="p">,</span> <span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">DEPT_STORE_NBR</span><span class="sh">"</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">long</span><span class="sh">"</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">,</span> <span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">decimal(12,4)</span><span class="sh">"</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">,</span> <span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">int</span><span class="sh">"</span><span class="p">))</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span><span class="p">.</span><span class="nf">groupBy</span><span class="p">(</span><span class="sh">"</span><span class="s">DEPT_STORE_NBR</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">FIN_EOW_DT</span><span class="sh">"</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">agg</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">).</span><span class="nf">alias</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">),</span> <span class="n">F</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">).</span><span class="nf">alias</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">))</span>
+<span class="p">)</span>
+<span class="c1"># print(df.count())
+</span></code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span>
+    <span class="p">.</span><span class="nf">groupBy</span><span class="p">(</span><span class="sh">"</span><span class="s">DEPT_STORE_NBR</span><span class="sh">"</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">agg</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">).</span><span class="nf">alias</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">),</span> <span class="n">F</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">).</span><span class="nf">alias</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">))</span>
+<span class="p">)</span>
+<span class="c1"># print(df.count())
+</span></code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">CORP</span><span class="sh">"</span><span class="p">,</span> <span class="n">F</span><span class="p">.</span><span class="nf">lpad</span><span class="p">((</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">DEPT_STORE_NBR</span><span class="sh">"</span><span class="p">)</span> <span class="o">/</span> <span class="mi">10000000</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">int</span><span class="sh">"</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">string</span><span class="sh">"</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="sh">'</span><span class="s">0</span><span class="sh">'</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">STORE</span><span class="sh">"</span><span class="p">,</span> <span class="n">F</span><span class="p">.</span><span class="nf">lpad</span><span class="p">((((</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">DEPT_STORE_NBR</span><span class="sh">"</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">int</span><span class="sh">"</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">string</span><span class="sh">"</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="sh">'</span><span class="s">0</span><span class="sh">'</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">DEPT</span><span class="sh">"</span><span class="p">,</span> <span class="n">F</span><span class="p">.</span><span class="nf">lpad</span><span class="p">((</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">DEPT_STORE_NBR</span><span class="sh">"</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1000</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">string</span><span class="sh">"</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="sh">'</span><span class="s">0</span><span class="sh">'</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">,</span> <span class="n">F</span><span class="p">.</span><span class="nf">when</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> 
+                                                <span class="n">F</span><span class="p">.</span><span class="nf">lpad</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">floor</span><span class="p">((</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mi">1</span><span class="p">)).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">string</span><span class="sh">"</span><span class="p">),</span> <span class="mi">8</span><span class="p">,</span> <span class="sh">'</span><span class="s">0</span><span class="sh">'</span><span class="p">))</span>
+                                           <span class="p">.</span><span class="nf">otherwise</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">lpad</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">floor</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">)).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">string</span><span class="sh">"</span><span class="p">),</span> <span class="mi">8</span><span class="p">,</span> <span class="sh">'</span><span class="s">0</span><span class="sh">'</span><span class="p">)))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">,</span> <span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">).</span><span class="nf">cast</span><span class="p">(</span><span class="sh">"</span><span class="s">string</span><span class="sh">"</span><span class="p">))</span>
+
+<span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">CORP</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">STORE</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">DEPT</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">BUD_SLS_AMT</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">YR_PER</span><span class="sh">"</span><span class="p">]</span>
+<span class="n">df</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span>
+    <span class="p">.</span><span class="nf">select</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="sh">"</span><span class="s">CORP</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">STORE</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">DEPT</span><span class="sh">"</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="c1"># print(df.count())
+</span>
+<span class="n">df</span><span class="p">.</span><span class="nf">show</span><span class="p">()</span>
+</code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Write the DataFrame to a Delta table
+</span><span class="n">df</span><span class="p">.</span><span class="n">write</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="sh">"</span><span class="s">delta</span><span class="sh">"</span><span class="p">).</span><span class="nf">save</span><span class="p">(</span><span class="n">write_path</span> <span class="o">+</span> <span class="sh">'</span><span class="s">budgetfile.delta</span><span class="sh">'</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="sh">'</span><span class="s">overwrite</span><span class="sh">'</span><span class="p">)</span>
+<span class="c1"># Write the DataFrame to a Parquet file
+</span><span class="n">df</span><span class="p">.</span><span class="n">write</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="sh">"</span><span class="s">parquet</span><span class="sh">"</span><span class="p">).</span><span class="nf">save</span><span class="p">(</span><span class="n">write_path</span> <span class="o">+</span> <span class="sh">'</span><span class="s">budgetfile.parquet</span><span class="sh">'</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="sh">'</span><span class="s">overwrite</span><span class="sh">'</span><span class="p">)</span>
+<span class="c1"># Write the DataFrame to a CSV file
+</span><span class="n">df</span><span class="p">.</span><span class="nf">coalesce</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">write</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="sh">"</span><span class="s">csv</span><span class="sh">"</span><span class="p">).</span><span class="nf">save</span><span class="p">(</span><span class="n">write_path</span> <span class="o">+</span> <span class="sh">'</span><span class="s">budgetfile.csv</span><span class="sh">'</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="sh">'</span><span class="s">overwrite</span><span class="sh">'</span><span class="p">)</span>
+</code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ==============================================================================
+# Write the same text file as the original DSSJU750 program
+# ==============================================================================
+# Write the DataFrame to a "text" file
+</span><span class="n">Budgetfile_FINAL</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span><span class="sh">"</span><span class="s">con</span><span class="sh">"</span><span class="p">,</span> <span class="n">F</span><span class="p">.</span><span class="nf">concat_ws</span><span class="p">(</span><span class="sh">'</span><span class="s">,</span><span class="sh">'</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">)).</span><span class="nf">select</span><span class="p">(</span><span class="sh">'</span><span class="s">con</span><span class="sh">'</span><span class="p">)</span>
+<span class="c1"># Budgetfile_FINAL.show()
+</span><span class="n">Budgetfile_FINAL</span><span class="p">.</span><span class="nf">coalesce</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">write</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">).</span><span class="nf">mode</span><span class="p">(</span><span class="sh">"</span><span class="s">overwrite</span><span class="sh">"</span><span class="p">).</span><span class="nf">option</span><span class="p">(</span><span class="sh">"</span><span class="s">header</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">true</span><span class="sh">"</span><span class="p">).</span><span class="nf">save</span><span class="p">(</span><span class="n">write_path</span> <span class="o">+</span> <span class="sh">'</span><span class="s">budgetfile.txt</span><span class="sh">'</span><span class="p">)</span>
+</code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">delta.tables</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="n">os</span>
+
+<span class="n">delta_read_path</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">write_path</span><span class="p">,</span> <span class="sh">"</span><span class="s">budgetfile.delta</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="n">spark</span><span class="p">.</span><span class="n">conf</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="sh">"</span><span class="s">spark.databricks.delta.retentionDurationCheck.enabled</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">false</span><span class="sh">"</span><span class="p">)</span>
+<span class="n">DeltaTable</span><span class="p">.</span><span class="nf">forPath</span><span class="p">(</span><span class="n">spark</span><span class="p">,</span> <span class="n">delta_read_path</span><span class="p">).</span><span class="nf">vacuum</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="n">spark</span><span class="p">.</span><span class="n">conf</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="sh">"</span><span class="s">spark.databricks.delta.retentionDurationCheck.enabled</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">true</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+
+<!-- Comments only for posts -->
+
+    
+
+
+            </article>
+        </main>
+
+        <footer>
+          <p class="copy">
+            <small> © Earl Davis 2024
+                    | Powered by Jekyll and
+                    <a target="_blank" href="https://github.com/jitinnair1/gradfolio/" rel="noopener noreferrer">Gradfolio</a>.
+                    Last updated on 07 March 2024
+            </small>
+          </p>
+
+        <div class="rounded-social-buttons">
+<a title="" class="social-button linkedin" href="https://www.linkedin.com/in/earldavis" itemprop="sameAs" target="_blank" rel="noopener noreferrer">
+<i class="fab fa-linkedin"></i>
+</a><a title="" class="social-button github" href="https://www.github.com/dirtyearl" itemprop="sameAs" target="_blank" rel="noopener noreferrer">
+<i class="fab fa-github"></i>
+</a><a title="" class="social-button facebook" itemprop="sameAs" href="https://www.facebook.com/earl.davis.70301" target="_blank" rel="noopener noreferrer">
+<i class="fab fa-facebook-f"></i>
+</a>
+</div>
+
+
+        </footer>
+
+        <!-- Google Analytics Tracking code -->
+<script src="https://cdn.jsdelivr.net/npm/ga-lite@1/dist/ga-lite.min.js" async></script>
+<script>
+var galite = galite || {};
+galite.UA = '';
+</script>
+
+    </body>
+
+</html>

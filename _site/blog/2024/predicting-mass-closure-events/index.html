@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta content="width=device-width, initial-scale=1" name="viewport">
+        <link rel="stylesheet" href="/earlfolio/assets/css/main.css">
+
+        <h1 class="post-headline">Earl Davis</h1>
+        <h3 class="post-description">Economics, Data Science, Data Engineering, and Machine Learning</h3>
+
+        <div class="links scroll">
+        <a href="/earlfolio/">Home</a>
+        <a href="/earlfolio/about/">About</a>
+        <a href="/earlfolio/resume/">Resume</a>
+        <a href="/earlfolio/blog/">Blog</a>
+        <a href="/earlfolio/archive/">Archive</a>
+        <!-- <a href="/earlfolio/projects/">Projects</a> -->
+</div>
+
+
+        <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Using Python to Extract Predictions from a VertexAI Model Endpoint | Earl Davis</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Using Python to Extract Predictions from a VertexAI Model Endpoint" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="An example of how to use python to transform data and query a VertexAI endpoint based on that transformation, because data engineering is not as simple as the tutorials make it out to be." />
+<meta property="og:description" content="An example of how to use python to transform data and query a VertexAI endpoint based on that transformation, because data engineering is not as simple as the tutorials make it out to be." />
+<link rel="canonical" href="http://localhost:4000/earlfolio/blog/2024/predicting-mass-closure-events/" />
+<meta property="og:url" content="http://localhost:4000/earlfolio/blog/2024/predicting-mass-closure-events/" />
+<meta property="og:site_name" content="Earl Davis" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-02-14T14:40:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Using Python to Extract Predictions from a VertexAI Model Endpoint" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2024-02-14T14:40:00-06:00","datePublished":"2024-02-14T14:40:00-06:00","description":"An example of how to use python to transform data and query a VertexAI endpoint based on that transformation, because data engineering is not as simple as the tutorials make it out to be.","headline":"Using Python to Extract Predictions from a VertexAI Model Endpoint","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/earlfolio/blog/2024/predicting-mass-closure-events/"},"url":"http://localhost:4000/earlfolio/blog/2024/predicting-mass-closure-events/"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+        <!-- Generated using https://favicon.io/ -->
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png?">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png?">
+<link rel="manifest" href=site.webmanifest">
+
+
+        <!-- MathJax -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: { inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+     processEscapes: true
+    }
+  });
+</script>
+
+
+        <!-- Load fontawesome here for faster loadtimes: https://stackoverflow.com/a/35880730/9523246 -->
+        <script type="text/javascript"> (function() { var css = document.createElement('link'); css.href = 'https://use.fontawesome.com/releases/v5.11.0/css/all.css'; css.rel = 'stylesheet'; css.type = 'text/css'; document.getElementsByTagName('head')[0].appendChild(css); })(); </script>
+    </head>
+
+    <body>
+        <main>
+            <article>
+                <h1 class="post-headline">Using Python to Extract Predictions from a VertexAI Model Endpoint</h1>
+<p class="meta"><small>February 14, 2024</small></p>
+
+<p>This scripts transforms some data so that it can be passed to a VertexAI endpoint to return predicitons.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">predictions</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="n">os</span><span class="p">,</span> <span class="n">json</span><span class="p">,</span> <span class="n">ast</span><span class="p">,</span> <span class="n">sys</span><span class="p">,</span> <span class="n">importlib</span>
+
+<span class="n">pd</span><span class="p">.</span><span class="n">options</span><span class="p">.</span><span class="n">display</span><span class="p">.</span><span class="n">max_rows</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">pd</span><span class="p">.</span><span class="n">options</span><span class="p">.</span><span class="n">display</span><span class="p">.</span><span class="n">max_columns</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">pd</span><span class="p">.</span><span class="n">options</span><span class="p">.</span><span class="n">display</span><span class="p">.</span><span class="n">precision</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="n">os</span><span class="p">.</span><span class="n">environ</span><span class="p">[</span><span class="sh">'</span><span class="s">PROJECT_ID</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="sh">"</span><span class="s">name-of-the-project-id</span><span class="sh">"</span>
+<span class="n">os</span><span class="p">.</span><span class="n">environ</span><span class="p">[</span><span class="sh">'</span><span class="s">ENDPOINT_ID</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="sh">"</span><span class="s">endpoint-id-number</span><span class="sh">"</span>
+<span class="n">os</span><span class="p">.</span><span class="n">environ</span><span class="p">[</span><span class="sh">'</span><span class="s">LOCATION</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="sh">'</span><span class="s">us-central1</span><span class="sh">'</span>
+<span class="n">os</span><span class="p">.</span><span class="n">environ</span><span class="p">[</span><span class="sh">'</span><span class="s">BUCKET</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="sh">'</span><span class="s">name-of-the-project-id-bucket</span><span class="sh">'</span>
+
+<span class="n">credentials</span><span class="p">,</span> <span class="n">project</span> <span class="o">=</span> <span class="n">google</span><span class="p">.</span><span class="n">auth</span><span class="p">.</span><span class="nf">default</span><span class="p">()</span> <span class="k">if</span> <span class="sh">"</span><span class="s">credentials</span><span class="sh">"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nf">locals</span><span class="p">()</span> <span class="ow">or</span> <span class="sh">"</span><span class="s">project</span><span class="sh">"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nf">locals</span><span class="p">()</span> <span class="nf">else </span><span class="p">(</span><span class="n">credentials</span><span class="p">,</span> <span class="n">project</span><span class="p">)</span>
+<span class="n">location</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="nf">getenv</span><span class="p">(</span><span class="sh">'</span><span class="s">LOCATION</span><span class="sh">'</span><span class="p">)</span>
+<span class="n">endpoint_id</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="nf">getenv</span><span class="p">(</span><span class="sh">'</span><span class="s">ENDPOINT_ID</span><span class="sh">'</span><span class="p">)</span>
+<span class="n">home_path</span> <span class="o">=</span> <span class="sh">"</span><span class="s">path/to/the/home/directory</span><span class="sh">"</span>
+
+<span class="c1"># ! gcloud auth application-default login
+</span><span class="n">read_path</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">home_path</span><span class="p">,</span> <span class="sh">'</span><span class="s">data</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">obfuscated-incidents.parquet</span><span class="sh">'</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nf">read_parquet</span><span class="p">(</span><span class="n">read_path</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="sh">'</span><span class="s">pyarrow</span><span class="sh">'</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="p">[</span>
+    <span class="p">(</span><span class="sh">'</span><span class="s">ym_opened</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">in</span><span class="sh">'</span><span class="p">,</span> <span class="p">[</span><span class="sh">'</span><span class="s">2023-07</span><span class="sh">'</span><span class="p">,</span> <span class="p">]),</span>
+    <span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">number</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">description</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">close_notes</span><span class="sh">'</span><span class="p">])</span>
+<span class="n">df</span><span class="p">[</span><span class="sh">'</span><span class="s">close_notes</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="sh">'</span><span class="s">close_notes</span><span class="sh">'</span><span class="p">].</span><span class="nf">fillna</span><span class="p">(</span><span class="sh">'</span><span class="s">no notes</span><span class="sh">'</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="sh">'</span><span class="s">description</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="sh">'</span><span class="s">description</span><span class="sh">'</span><span class="p">].</span><span class="nf">fillna</span><span class="p">(</span><span class="sh">'</span><span class="s">no description</span><span class="sh">'</span><span class="p">)</span>
+
+<span class="n">network_list</span> <span class="o">=</span> <span class="p">[</span><span class="sh">'</span><span class="s">socket timeout</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">nic redundancy</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ping failure</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">networkredundancylostalarm</span><span class="sh">'</span><span class="p">]</span>
+<span class="n">write_file</span><span class="o">=</span><span class="sh">'</span><span class="s">df.json</span><span class="sh">'</span>
+
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">network_incident</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">description</span><span class="sh">'</span><span class="p">].</span><span class="nb">str</span><span class="p">.</span><span class="nf">lower</span><span class="p">().</span><span class="nb">str</span><span class="p">.</span><span class="nf">contains</span><span class="p">(</span><span class="sh">'</span><span class="s">|</span><span class="sh">'</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">network_list</span><span class="p">),</span> <span class="n">case</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">nagios_incident</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">description</span><span class="sh">'</span><span class="p">].</span><span class="nb">str</span><span class="p">.</span><span class="nf">lower</span><span class="p">().</span><span class="nb">str</span><span class="p">.</span><span class="nf">contains</span><span class="p">(</span><span class="sh">'</span><span class="s">nagios</span><span class="sh">'</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">autosys_incident</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">description</span><span class="sh">'</span><span class="p">].</span><span class="nb">str</span><span class="p">.</span><span class="nf">lower</span><span class="p">().</span><span class="nb">str</span><span class="p">.</span><span class="nf">contains</span><span class="p">(</span><span class="sh">'</span><span class="s">autosys</span><span class="sh">'</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">avg_count</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span><span class="p">[[</span><span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">number</span><span class="sh">'</span><span class="p">]]</span>
+    <span class="p">.</span><span class="nf">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">pd</span><span class="p">.</span><span class="nc">Timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">60</span><span class="p">),</span> <span class="n">center</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="sh">'</span><span class="s">both</span><span class="sh">'</span><span class="p">).</span><span class="nf">count</span><span class="p">()</span>
+    <span class="p">.</span><span class="nf">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">pd</span><span class="p">.</span><span class="nc">Timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">900</span><span class="p">),</span> <span class="n">center</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="sh">'</span><span class="s">both</span><span class="sh">'</span><span class="p">).</span><span class="nf">max</span><span class="p">()</span>
+    <span class="p">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">log_avg_count</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">log1p</span><span class="p">(</span><span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">avg_count</span><span class="sh">'</span><span class="p">])</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span><span class="p">[[</span><span class="sh">'</span><span class="s">number</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">close_notes</span><span class="sh">'</span><span class="p">]]</span>
+    <span class="p">.</span><span class="nf">groupby</span><span class="p">(</span><span class="sh">'</span><span class="s">close_notes</span><span class="sh">'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">pd</span><span class="p">.</span><span class="nc">Timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">900</span><span class="p">),</span> <span class="n">center</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="sh">'</span><span class="s">both</span><span class="sh">'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">count</span><span class="p">().</span><span class="nf">reset_index</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nf">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">number</span><span class="sh">'</span><span class="p">:</span><span class="sh">'</span><span class="s">max_close_count</span><span class="sh">'</span><span class="p">})</span>
+    <span class="p">.</span><span class="nf">merge</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="sh">'</span><span class="s">right</span><span class="sh">'</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">close_notes</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">],</span> <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">close_notes</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">])</span>
+    <span class="p">.</span><span class="nf">drop_duplicates</span><span class="p">()</span>
+<span class="p">)</span>
+
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">scaled_log_avg_count</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">log_avg_count</span><span class="sh">'</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">log_avg_count</span><span class="sh">'</span><span class="p">]))</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="nf">std</span><span class="p">(</span><span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">log_avg_count</span><span class="sh">'</span><span class="p">])</span>
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">"</span><span class="s">autosys_storm</span><span class="sh">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">autosys_incident</span><span class="sh">'</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">scaled_log_avg_count</span><span class="sh">'</span><span class="p">]</span>
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">"</span><span class="s">nagios_storm</span><span class="sh">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">nagios_incident</span><span class="sh">'</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">scaled_log_avg_count</span><span class="sh">'</span><span class="p">]</span>
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">"</span><span class="s">network_storm</span><span class="sh">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">network_incident</span><span class="sh">'</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="sh">'</span><span class="s">scaled_log_avg_count</span><span class="sh">'</span><span class="p">]</span>
+<span class="n">df</span><span class="p">.</span><span class="nf">to_json</span><span class="p">(</span><span class="n">write_file</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="sh">'</span><span class="s">records</span><span class="sh">'</span><span class="p">)</span>
+<span class="n">jsn</span> <span class="o">=</span> <span class="nf">list</span><span class="p">()</span>
+<span class="k">with</span> <span class="nf">open</span><span class="p">(</span><span class="n">write_file</span><span class="p">,</span> <span class="sh">'</span><span class="s">r</span><span class="sh">'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">jsn</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">json</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+        
+<span class="n">lst</span> <span class="o">=</span> <span class="nf">map</span><span class="p">(</span><span class="n">process_func</span><span class="p">,</span> <span class="n">jsn</span><span class="p">)</span>
+<span class="n">pdf</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pd</span><span class="p">.</span><span class="n">DataFrame</span><span class="p">.</span><span class="nf">from_records</span><span class="p">(</span><span class="n">lst</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">assign</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">pd</span><span class="p">.</span><span class="nf">to_datetime</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">opened_at</span><span class="sh">'</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="sh">'</span><span class="s">ms</span><span class="sh">'</span><span class="p">)})</span>
+<span class="p">)</span>
+
+<span class="n">write_json</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">home_path</span><span class="p">,</span> <span class="sh">'</span><span class="s">data</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">predict-mass-close.json</span><span class="sh">'</span><span class="p">)</span>
+<span class="n">pdf</span><span class="p">.</span><span class="nf">to_json</span><span class="p">(</span><span class="n">write_json</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="sh">'</span><span class="s">records</span><span class="sh">'</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nf">read_json</span><span class="p">(</span><span class="n">write_json</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="sh">'</span><span class="s">records</span><span class="sh">'</span><span class="p">)</span>
+<span class="n">_</span><span class="p">.</span><span class="nf">head</span><span class="p">()</span>
+</code></pre></div></div>
+
+
+<!-- Comments only for posts -->
+
+    
+
+
+            </article>
+        </main>
+
+        <footer>
+          <p class="copy">
+            <small> © Earl Davis 2024
+                    | Powered by Jekyll and
+                    <a target="_blank" href="https://github.com/jitinnair1/gradfolio/" rel="noopener noreferrer">Gradfolio</a>.
+                    Last updated on 07 March 2024
+            </small>
+          </p>
+
+        <div class="rounded-social-buttons">
+<a title="" class="social-button linkedin" href="https://www.linkedin.com/in/earldavis" itemprop="sameAs" target="_blank" rel="noopener noreferrer">
+<i class="fab fa-linkedin"></i>
+</a><a title="" class="social-button github" href="https://www.github.com/dirtyearl" itemprop="sameAs" target="_blank" rel="noopener noreferrer">
+<i class="fab fa-github"></i>
+</a><a title="" class="social-button facebook" itemprop="sameAs" href="https://www.facebook.com/earl.davis.70301" target="_blank" rel="noopener noreferrer">
+<i class="fab fa-facebook-f"></i>
+</a>
+</div>
+
+
+        </footer>
+
+        <!-- Google Analytics Tracking code -->
+<script src="https://cdn.jsdelivr.net/npm/ga-lite@1/dist/ga-lite.min.js" async></script>
+<script>
+var galite = galite || {};
+galite.UA = '';
+</script>
+
+    </body>
+
+</html>
