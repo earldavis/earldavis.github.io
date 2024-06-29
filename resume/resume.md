@@ -6,6 +6,8 @@ layout: default
 
 ### Senior Analyst I Data Science, DXC Technology, New Orleans, LA	February 2019 - Present
 
+- Developed DAGs in airflow to process Oracle database data into xml documents
+- Created templates with jinja and wrote the scripts to generate pdf’s from xml documents 
 - Used prompt engineering with Github Copilot to convert IBM Datastage jobs to Databricks and PySpark
 - Engineered prompts to in Github Copilot to create unit tests based on code changes in git repos
 - Architected GCP MLOps services for the implementation of ML for a major aerospace firm
@@ -59,12 +61,13 @@ layout: default
 - Terraform and dbt
 - Kubernetes and Docker
 - Kafka and GCP Pub/Sub
-- Python: PySpark, PyArrow, Scikit-Learn, SciPy, StatsModels, Pandas, Numpy, Beam, Airflow, TensorFlow ...
+- Python: Airflow, PySpark, PyArrow, Scikit-Learn, SciPy, StatsModels, Pandas, Numpy, Beam, Airflow, TensorFlow ...
 - MATLAB/Octave, Julia, Stata
 - R: Tidyverse, data.table, sf, Shiny, sparklyR, ...
 
 ## Certifications, Certificates, and Specializations:
 
+- Fabric Analytics Engineer Associate – Microsoft (2024-05-10)
 - Associate Palantir Foundry Data Engineer - Palantir (2023-11-29)
 - Associate Cloud Engineer Certification - Google Cloud (2019-12-16) renewed in 2021
 - Professional Data Engineer Certification - Google Cloud (2020-06-29) renewed in 2022
