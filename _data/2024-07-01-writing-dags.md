@@ -1,3 +1,16 @@
+---
+layout: post
+title: Writing DAGS.
+date: 2024-07-01 10:22
+categories: [data_engineering,]
+description: A post about writing dags in Airflow.
+---
+
+# A Little DAG I Wrote the Other Day
+
+A dag I wrote the other day:
+
+```python
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
 import oracledb, os, configparser
@@ -810,3 +823,4 @@ def earls_data_generation_dag_v3():
     get_order_no(N=100) >> create_queries_task() >> write_dataset_task() >> create_xml_document_task() >> print_list()
 
 earls_data_generation_dag_v3()
+```
