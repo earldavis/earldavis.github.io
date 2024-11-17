@@ -70,7 +70,8 @@ description: My CV/Resume
 
 ## Certifications, Certificates, and Specializations:
 
-- Fabric Analytics Engineer Associate – Microsoft (2024-05-10)
+- Professional Cloud Architect Certification - Google Cloud (2024-06-28)
+- Fabric Analytics Engineer Associate - Microsoft (2024-05-10)
 - Associate Palantir Foundry Data Engineer - Palantir (2023-11-29)
 - Associate Cloud Engineer Certification - Google Cloud (2019-12-16) renewed in 2021
 - Professional Data Engineer Certification - Google Cloud (2020-06-29) renewed in 2022
