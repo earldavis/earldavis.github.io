@@ -8,8 +8,9 @@ description: My CV/Resume
 
 ### Senior Analyst I Data Science, DXC Technology, New Orleans, LA	February 2019 - Present
 
-- Developed DAGs in airflow to process Oracle database data into xml documents
-- Created templates with jinja and wrote the scripts to generate pdf’s from xml documents 
+- Developed and deployed containers using Docker Compose yaml scripts that coordinated Airflow, Kafka, and a Java application to create pdf documents for archiving
+- Developed DAGs in Airflow to process Oracle database data into xml documents
+- Created templates with Jinja and wrote the scripts to generate pdf’s from xml documents 
 - Used prompt engineering with Github Copilot to convert IBM Datastage jobs to Databricks and PySpark
 - Engineered prompts to in Github Copilot to create unit tests based on code changes in git repos
 - Architected GCP MLOps services for the implementation of ML for a major aerospace firm
