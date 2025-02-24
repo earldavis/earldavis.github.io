@@ -70,6 +70,9 @@ description: My CV/Resume
 
 ## Certifications, Certificates, and Specializations:
 
+- AWS Platform Architect Accreditation - Databricks (2025-02-07)
+- Platform Administrator Accreditation - Databricks (2025-02-03)
+- Solutions Architect Essentials - Databricks (2024-10-17)
 - Professional Cloud Architect Certification - Google Cloud (2024-06-28)
 - Fabric Analytics Engineer Associate - Microsoft (2024-05-10)
 - Associate Palantir Foundry Data Engineer - Palantir (2023-11-29)
