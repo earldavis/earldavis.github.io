@@ -6,7 +6,12 @@ description: My CV/Resume
 
 ## Experience and Professional Accomplishments:
 
-### Senior Analyst I Data Science, DXC Technology, New Orleans, LA	February 2019 - Present
+### Associate Manager Data Science, DXC Technology, New Orleans, LA	April 2025 - Present
+
+- Lead Data Engineer implementing Databricks pipelines for a major transportation client
+- Built streaming data pipelines using Databricks Lakeflow API and Apache Spark
+
+### Senior Analyst I Data Science, DXC Technology, New Orleans, LA	February 2019 - April 2025
 
 - Developed containers and orchestrated their deployment in a secure environment using Docker Compose yaml and Dockerfiles
 - Developed DAGs in Airflow to process Oracle database data into xml documents
