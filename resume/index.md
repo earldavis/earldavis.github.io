@@ -9,6 +9,7 @@ description: My CV/Resume
 ### Associate Manager Data Science, DXC Technology, New Orleans, LA	April 2025 - Present
 
 - Lead Data Engineer on Databricks for a major transportation client
+- Developed pipelines to ingest raw XML, flatten, and transform to build bronze, silver, and gold level tables in a medallion architecture
 - Ingested Wi-Tronix telemetry data via the Databricks pipeline api
 - Built data pipelines in Databricks using SQL and PySpark
 - Modified Terraform scripts and AWS policies to deploy a secure, isolated workspaces in Databricks on AWS.
