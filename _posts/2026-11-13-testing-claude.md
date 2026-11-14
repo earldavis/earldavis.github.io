@@ -6,8 +6,6 @@ categories: [misc,]
 description: Testing Claude
 ---
 
-# Testing Claude
-
 This post is a small experiment: I'm using Claude Code, Anthropic's command-line coding assistant, to help maintain this site, and I wanted to see how it handles a real (if modest) repository.
 
 ## The Setup
